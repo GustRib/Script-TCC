@@ -10,3 +10,6 @@ public class TestFile {
         logger.info("Se você está vendo esta mensagem, o SLF4J está funcionando!");
     }
 }
+
+
+

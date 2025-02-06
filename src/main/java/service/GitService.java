@@ -12,7 +12,6 @@ public class GitService {
 
             Process process = builder.start();
 
-            // Captura e imprime a saída do comando
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -20,7 +19,7 @@ public class GitService {
                 }
             }
 
-            int exitCode = process.waitFor(); // Aguarda a finalização do processo
+            int exitCode = process.waitFor();
 
             if (exitCode == 0) {
                 System.out.println("Repositório clonado com sucesso.");
@@ -31,7 +30,7 @@ public class GitService {
             }
         } catch (IOException | InterruptedException e) {
             System.err.println("Falha ao executar o comando git clone: " + e.getMessage());
-            Thread.currentThread().interrupt(); // Restaura o estado de interrupção
+            Thread.currentThread().interrupt();
             return false;
         }
     }

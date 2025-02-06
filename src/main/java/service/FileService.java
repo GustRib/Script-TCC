@@ -22,17 +22,31 @@ public class FileService {
 
     public static List<File> findTestFiles(List<File> javaFiles) {
         return javaFiles.stream()
-                .filter(file -> file.getName().toLowerCase().contains("test") || containsTestAnnotation(file))
+                .filter(file -> {
+                    boolean hasTestInName = file.getName().toLowerCase().contains("test");
+                    boolean hasTestAnnotation = containsTestAnnotation(file);
+
+                    System.out.println("Arquivo analisado: " + file.getName() +
+                            " | Nome contém 'test'? " + hasTestInName +
+                            " | Contém @Test? " + hasTestAnnotation);
+
+                    return hasTestInName || hasTestAnnotation;
+                })
                 .collect(Collectors.toList());
     }
 
     private static boolean containsTestAnnotation(File file) {
         try {
-            return Files.lines(file.toPath()).anyMatch(line -> line.trim().contains("@Test"));
+            return Files.lines(file.toPath())
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .anyMatch(line -> line.contains("@test"));
         } catch (IOException e) {
+            System.err.println("Erro ao ler o arquivo: " + file.getName() + " - " + e.getMessage());
             return false;
         }
     }
+
 
     private static void findFilesRecursively(File dir, List<File> fileList, String extension) {
         if (dir != null && dir.listFiles() != null) {

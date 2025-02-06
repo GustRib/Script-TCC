@@ -71,7 +71,19 @@ public class MergeService {
         return testMerges;
     }
 
+    private static String getFirstTestFileAffectedByMerge(List<String> modifiedFiles, List<File> testFiles) {
+        for (File testFile : testFiles) {
+            String testFilePath = testFile.getPath();
 
+            for (String modifiedFile : modifiedFiles) {
+                if (modifiedFile.endsWith(testFilePath)) {
+                    System.out.println("Arquivo de teste encontrado: " + modifiedFile);
+                    return modifiedFile;
+                }
+            }
+        }
+        return null;
+    }
 
     private static List<String> getParentHashes(String repoPath, String mergeHash) {
         List<String> parents = new ArrayList<>();
@@ -107,7 +119,7 @@ public class MergeService {
             System.out.println("🔀 Tentando merge com " + parent2);
             executeGitCommand(repoPath, "git", "merge", parent2, "--no-ff", "--no-commit");
 
-            // 📌 Capturar arquivos modificados via `git status -s`
+            //Capturar arquivos modificados via `git status -s`
             List<String> modifiedFiles = executeGitStatus(repoPath);
 
             for (File testFile : testFiles) {
@@ -119,8 +131,6 @@ public class MergeService {
                 }
             }
 
-
-            // 📌 Log de depuração
             if (affectedTestFiles.isEmpty()) {
                 System.out.println("⚠️ Nenhum arquivo de teste foi alterado.");
             } else {
@@ -150,7 +160,6 @@ public class MergeService {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // Formato esperado: " M src/MeuArquivo.java" ou "?? novoArquivo.java"
                 String filePath = line.substring(3).trim();
                 modifiedFiles.add(new File(repoPath, filePath).getAbsolutePath());
             }

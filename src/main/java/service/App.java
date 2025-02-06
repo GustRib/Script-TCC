@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
-//horas gastas no script = 21
+//horas gastas no script = 23
 public class App {
     private static final String BASE_REPO_DIR = "repos";
 
@@ -59,6 +59,13 @@ public class App {
 
                     System.out.println("Total de arquivos de teste encontrados: " + testFiles1.size());
                     testFiles1.forEach(file -> System.out.println(file.getName()));
+
+/*
+                    String outputPath = "test_report.xlsx";
+                    // Gerar a planilha com os dados
+                    ExcelReportService.generateTestFilesReport(outputPath, javaFiles);
+                    System.out.println("Planilha gerada em: " + outputPath);
+*/
                     break;
 
                 case 4:
