@@ -3,14 +3,16 @@ package service;
 import model.MergeInfo;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+//horas gastas no script = 21
 public class App {
     private static final String BASE_REPO_DIR = "repos";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         Scanner scanner = new Scanner(System.in);
         GitService gitService = new GitService();

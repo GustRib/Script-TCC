@@ -26,12 +26,6 @@ public class FileService {
                 .collect(Collectors.toList());
     }
 
-    public static List<File> findFilesWithTestAnnotation(List<File> testFiles) {
-        return testFiles.stream()
-                .filter(FileService::containsTestAnnotation)
-                .collect(Collectors.toList());
-    }
-
     private static boolean containsTestAnnotation(File file) {
         try {
             return Files.lines(file.toPath()).anyMatch(line -> line.trim().contains("@Test"));
