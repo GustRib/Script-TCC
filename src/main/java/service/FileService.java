@@ -3,7 +3,6 @@ package service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,9 +16,13 @@ public class FileService {
         return javaFiles;
     }
 
+    public static int countJavaFiles(String projectPath) {
+        return listJavaFiles(projectPath).size();
+    }
+
     public static List<File> findTestFiles(List<File> javaFiles) {
         return javaFiles.stream()
-                .filter(file -> file.getName().contains("Test"))
+                .filter(file -> file.getName().toLowerCase().contains("test") || containsTestAnnotation(file))
                 .collect(Collectors.toList());
     }
 
@@ -38,11 +41,13 @@ public class FileService {
     }
 
     private static void findFilesRecursively(File dir, List<File> fileList, String extension) {
-        for (File file : dir.listFiles()) {
-            if (file.isDirectory()) {
-                findFilesRecursively(file, fileList, extension);
-            } else if (file.getName().endsWith(extension)) {
-                fileList.add(file);
+        if (dir != null && dir.listFiles() != null) {
+            for (File file : dir.listFiles()) {
+                if (file.isDirectory()) {
+                    findFilesRecursively(file, fileList, extension);
+                } else if (file.getName().endsWith(extension)) {
+                    fileList.add(file);
+                }
             }
         }
     }

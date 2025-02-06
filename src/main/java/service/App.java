@@ -1,9 +1,17 @@
 package service;
 
+import model.MergeInfo;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class App {
+    private static final String BASE_REPO_DIR = "repos";
+
     public static void main(String[] args) {
+
         Scanner scanner = new Scanner(System.in);
         GitService gitService = new GitService();
 
@@ -17,35 +25,69 @@ public class App {
             System.out.print("Escolha uma opção: ");
 
             int opcao = scanner.nextInt();
-            scanner.nextLine();  // Consumir nova linha
+            scanner.nextLine();
 
             switch (opcao) {
                 case 1:
                     System.out.print("Digite o link do repositório: ");
                     String repoUrl = scanner.nextLine();
-                    System.out.print("Digite o diretório de destino: ");
-                    String repoDir = scanner.nextLine();
-                    GitService.cloneRepository(repoUrl, repoDir);
+                    String repoName = extractRepoName(repoUrl);
+                    String repoDir = BASE_REPO_DIR + File.separator + repoName;
+
+                    File repoFolder = new File(repoDir);
+                    if (repoFolder.exists() && repoFolder.isDirectory()) {
+                        System.out.println("Repositório já clonado. Avançando...");
+                    } else {
+                        System.out.println("Clonando repositório para " + repoDir);
+                        GitService.cloneRepository(repoUrl, repoDir);
+                    }
                     break;
+
                 case 2:
                     System.out.print("Digite o diretório do repositório: ");
                     String dir = scanner.nextLine();
-                    int count = FileService.listJavaFiles;
+                    int count = FileService.countJavaFiles(dir);
                     System.out.println("Total de arquivos .java: " + count);
                     break;
 
                 case 3:
                     System.out.print("Digite o diretório do repositório: ");
-                    String repoPath = scanner.nextLine();
-                    MergeService.analyzeMerges(repoPath);
+                    String testDir = scanner.nextLine();
+                    List<File> testFiles1 = FileService.findTestFiles(FileService.listJavaFiles(testDir));
+
+                    System.out.println("Total de arquivos de teste encontrados: " + testFiles1.size());
+                    testFiles1.forEach(file -> System.out.println(file.getName()));
                     break;
+
                 case 4:
+                    long startTime = System.nanoTime();
+                    System.out.println("Digite o caminho do repositório Git:");
+                    String repoPath = scanner.nextLine();
+                    System.out.println("Repositório selecionado: " + repoPath);
+
+                    List<String> testFiles = Arrays.asList();
+                    List<MergeInfo> testMerges = MergeService.listMerges(repoPath, testFiles); // Já imprime os merges e os que envolvem testes
+                    System.out.println("Quantidade de merges que afetam arquivos de teste: " + testMerges.size());
+                    testMerges.forEach(merge -> System.out.println(merge));
+                    long endTime = System.nanoTime();
+                    double elapsedTimeInSeconds = (endTime - startTime) / 1_000_000_000.0;
+                    System.out.println("Tempo total de execução: " + elapsedTimeInSeconds + " segundos");
+                    break;
+
+
+                case 5:
                     System.out.println("Saindo...");
                     scanner.close();
                     return;
+
                 default:
                     System.out.println("Opção inválida. Tente novamente.");
             }
         }
     }
+
+    private static String extractRepoName(String repoUrl) {
+        return repoUrl.substring(repoUrl.lastIndexOf("/") + 1).replace(".git", "");
+    }
+
 }

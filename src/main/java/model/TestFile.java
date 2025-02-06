@@ -1,19 +1,12 @@
 package model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TestFile {
-    private String filePath;
-    private boolean containsTestAnnotation;
+    private static final Logger logger = LoggerFactory.getLogger(TestFile.class);
 
-    public TestFile(String filePath, boolean containsTestAnnotation) {
-        this.filePath = filePath;
-        this.containsTestAnnotation = containsTestAnnotation;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public boolean containsTestAnnotation() {
-        return containsTestAnnotation;
+    public static void main(String[] args) {
+        logger.info("Se você está vendo esta mensagem, o SLF4J está funcionando!");
     }
 }
