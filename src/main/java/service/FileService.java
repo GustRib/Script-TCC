@@ -20,6 +20,17 @@ public class FileService {
         return listJavaFiles(projectPath).size();
     }
 
+    public static List<String> getModifiedFiles(String repoPath) throws IOException {
+        return executeGitCommand(repoPath, "git", "diff", "--name-only", "--diff-filter=AM");
+    }
+
+    public static List<String> getUnmergedTestFiles(String repoPath) throws IOException {
+        List<String> unmergedFiles = executeGitCommand(repoPath, "git", "ls-files", "--unmerged");
+        return unmergedFiles.stream()
+                .filter(file -> file.toLowerCase().contains("test"))
+                .collect(Collectors.toList());
+    }
+
     public static List<File> findTestFiles(List<File> javaFiles) {
         return javaFiles.stream()
                 .filter(file -> {
@@ -47,7 +58,6 @@ public class FileService {
         }
     }
 
-
     private static void findFilesRecursively(File dir, List<File> fileList, String extension) {
         if (dir != null && dir.listFiles() != null) {
             for (File file : dir.listFiles()) {
@@ -58,5 +68,19 @@ public class FileService {
                 }
             }
         }
+    }
+
+    private static List<String> executeGitCommand(String repoPath, String... command) throws IOException {
+        List<String> output = new ArrayList<>();
+        ProcessBuilder builder = new ProcessBuilder(command);
+        builder.directory(new File(repoPath));
+        Process process = builder.start();
+        try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.add(line.trim());
+            }
+        }
+        return output;
     }
 }

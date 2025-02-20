@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 //horas gastas no script = 23
 public class App {
@@ -74,15 +75,21 @@ public class App {
                     String repoPath = scanner.nextLine();
                     System.out.println("Repositório selecionado: " + repoPath);
 
-                    List<String> testFiles = Arrays.asList();
-                    List<MergeInfo> testMerges = MergeService.listMerges(repoPath, testFiles); // Já imprime os merges e os que envolvem testes
+                    // Obter os arquivos de teste não mesclados
+                    List<String> unmergedTestFiles = FileService.getUnmergedTestFiles(repoPath);
+                    List<File> testFiles = unmergedTestFiles.stream()
+                            .map(filePath -> new File(filePath))
+                            .collect(Collectors.toList());
+
+                    // Chamar listMerges passando repoPath e a lista de arquivos de teste
+                    List<MergeInfo> testMerges = MergeService.listMerges(repoPath, testFiles); // Passando os arquivos de teste
                     System.out.println("Quantidade de merges que afetam arquivos de teste: " + testMerges.size());
                     testMerges.forEach(merge -> System.out.println(merge));
+
                     long endTime = System.nanoTime();
                     double elapsedTimeInSeconds = (endTime - startTime) / 1_000_000_000.0;
                     System.out.println("Tempo total de execução: " + elapsedTimeInSeconds + " segundos");
                     break;
-
 
                 case 5:
                     System.out.println("Saindo...");
