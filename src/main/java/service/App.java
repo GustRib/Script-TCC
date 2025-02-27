@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
-//horas gastas no script = 23
+//horas gastas no script = 34
 public class App {
     private static final String BASE_REPO_DIR = "repos";
 
@@ -71,20 +71,21 @@ public class App {
 
                 case 4:
                     long startTime = System.nanoTime();
+
                     System.out.println("Digite o caminho do repositório Git:");
                     String repoPath = scanner.nextLine();
                     System.out.println("Repositório selecionado: " + repoPath);
 
-                    // Obter os arquivos de teste não mesclados
-                    List<String> unmergedTestFiles = FileService.getUnmergedTestFiles(repoPath);
-                    List<File> testFiles = unmergedTestFiles.stream()
-                            .map(filePath -> new File(filePath))
-                            .collect(Collectors.toList());
+                    // Perguntar se o usuário deseja modo automático ou manual
+                    System.out.print("Deseja executar os merges automaticamente? (s/n): ");
+                    boolean automaticMode = scanner.nextLine().equalsIgnoreCase("s");
 
-                    // Chamar listMerges passando repoPath e a lista de arquivos de teste
-                    List<MergeInfo> testMerges = MergeService.listMerges(repoPath, testFiles); // Passando os arquivos de teste
+                    // Criar instância do MergeService
+                    MergeService mergeService = new MergeService(repoPath);
+                    List<MergeInfo> testMerges = mergeService.listMerges(automaticMode);
+
                     System.out.println("Quantidade de merges que afetam arquivos de teste: " + testMerges.size());
-                    testMerges.forEach(merge -> System.out.println(merge));
+                    testMerges.forEach(System.out::println);
 
                     long endTime = System.nanoTime();
                     double elapsedTimeInSeconds = (endTime - startTime) / 1_000_000_000.0;
