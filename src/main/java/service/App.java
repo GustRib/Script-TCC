@@ -4,17 +4,14 @@ import model.MergeInfo;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
-//horas gastas no script = 34
+// horas gastas no script = 44
 public class App {
     private static final String BASE_REPO_DIR = "repos";
 
     public static void main(String[] args) throws IOException {
-
         Scanner scanner = new Scanner(System.in);
         GitService gitService = new GitService();
 
@@ -60,13 +57,6 @@ public class App {
 
                     System.out.println("Total de arquivos de teste encontrados: " + testFiles1.size());
                     testFiles1.forEach(file -> System.out.println(file.getName()));
-
-/*
-                    String outputPath = "test_report.xlsx";
-                    // Gerar a planilha com os dados
-                    ExcelReportService.generateTestFilesReport(outputPath, javaFiles);
-                    System.out.println("Planilha gerada em: " + outputPath);
-*/
                     break;
 
                 case 4:
@@ -76,16 +66,20 @@ public class App {
                     String repoPath = scanner.nextLine();
                     System.out.println("Repositório selecionado: " + repoPath);
 
-                    // Perguntar se o usuário deseja modo automático ou manual
+                    MergeService mergeService = new MergeService(repoPath);
+
                     System.out.print("Deseja executar os merges automaticamente? (s/n): ");
                     boolean automaticMode = scanner.nextLine().equalsIgnoreCase("s");
 
-                    // Criar instância do MergeService
-                    MergeService mergeService = new MergeService(repoPath);
-                    List<MergeInfo> testMerges = mergeService.listMerges(automaticMode);
-
-                    System.out.println("Quantidade de merges que afetam arquivos de teste: " + testMerges.size());
-                    testMerges.forEach(System.out::println);
+                    if (!automaticMode) {
+                        System.out.print("Digite o hash do merge que deseja testar: ");
+                        String mergeHash = scanner.nextLine();
+                        mergeService.manualMerge(mergeHash);
+                    } else {
+                        List<MergeInfo> testMerges = mergeService.listMerges(true);
+                        System.out.println("Quantidade de merges que afetam arquivos de teste: " + testMerges.size());
+                        testMerges.forEach(System.out::println);
+                    }
 
                     long endTime = System.nanoTime();
                     double elapsedTimeInSeconds = (endTime - startTime) / 1_000_000_000.0;
@@ -106,5 +100,4 @@ public class App {
     private static String extractRepoName(String repoUrl) {
         return repoUrl.substring(repoUrl.lastIndexOf("/") + 1).replace(".git", "");
     }
-
 }

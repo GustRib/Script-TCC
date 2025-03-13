@@ -6,59 +6,73 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class MergeService {
-    private final String repoPath;
     private final GitHelper gitHelper;
     private final MergeProcessor mergeProcessor;
 
     public MergeService(String repoPath) {
-        this.repoPath = repoPath;
         this.gitHelper = new GitHelper(repoPath);
         this.mergeProcessor = new MergeProcessor(repoPath, gitHelper);
     }
 
     public List<MergeInfo> listMerges(boolean automaticMode) throws IOException {
         List<MergeInfo> testMerges = new ArrayList<>();
-        Scanner scanner = new Scanner(System.in);
-
-        // Obter todos os hashes de commits de merge
         List<String> mergeHashes = gitHelper.getMergeCommits();
 
         for (String mergeHash : mergeHashes) {
-            // Sempre voltar para a master e limpar o repositório antes do próximo merge
-            System.out.println("🔄 Resetando para a master e limpando repositório...");
-            gitHelper.executeGitCommandWithFeedback("git", "checkout", "master");
-            gitHelper.executeGitCommandWithFeedback("git", "reset", "--hard");
-            gitHelper.executeGitCommandWithFeedback("git", "clean", "-df");
+            try {
+                resetRepository();
+                gitHelper.checkoutBranch("master");
 
-            System.out.println("\n🔄 Tentando refazer o merge: " + mergeHash);
-            boolean mergeSuccess = mergeProcessor.processMerge(mergeHash, automaticMode);
+                System.out.println("\n🔄 Tentando refazer o merge: " + mergeHash);
+                List<String> conflictFiles = mergeProcessor.processMerge(mergeHash, automaticMode);
 
-            if (!mergeSuccess) {
-                System.out.println("❌ Merge falhou. Aplicando heurística para encontrar arquivos de teste conflitantes.");
-                if (!mergeProcessor.getUnmergedTestFiles().isEmpty()) {
-                    testMerges.add(new MergeInfo(mergeHash, mergeProcessor.getParent1(), mergeProcessor.getParent2()));
-                    System.out.println("✅ Arquivos de teste conflitantes encontrados:");
-                    mergeProcessor.getUnmergedTestFiles().forEach(file -> System.out.println(file.getName()));
+                if (!conflictFiles.isEmpty()) {
+                    List<File> unmergedTestFiles = conflictFiles.stream()
+                            .filter(file -> file.toLowerCase().contains("test"))
+                            .map(file -> new File(mergeProcessor.getRepoPath(), file)) // Obtém repoPath do mergeProcessor
+                            .toList();
 
-                } else {
-                    System.out.println("⚠️ Nenhum arquivo de teste conflitante encontrado.");
+                    if (!unmergedTestFiles.isEmpty()) {
+                        testMerges.add(new MergeInfo(mergeHash, mergeProcessor.getParent1(), mergeProcessor.getParent2()));
+                        System.out.println("✅ Arquivos de teste conflitantes encontrados:");
+                        unmergedTestFiles.forEach(file -> System.out.println(file.getName()));
+                    }
                 }
-            } else {
-                System.out.println("✅ Merge aplicado sem conflitos.");
-            }
-
-            if (!automaticMode) {
-                System.out.print("Deseja continuar para o próximo merge? (s/n): ");
-                String resposta = scanner.nextLine();
-                if (!resposta.equalsIgnoreCase("s")) {
-                    System.out.println("Processo interrompido pelo usuário.");
-                    break;
-                }
+            } catch (IOException e) {
+                System.err.println("Erro ao processar merge " + mergeHash + ": " + e.getMessage());
             }
         }
         return testMerges;
+    }
+
+
+    public void manualMerge(String mergeHash) throws IOException {
+        gitHelper.resetRepository(); // Reset para evitar conflitos anteriores
+        List<String> conflictFiles = mergeProcessor.processMerge(mergeHash, false); // Obtém lista de arquivos conflitantes
+
+        if (conflictFiles.isEmpty()) {
+            System.out.println("✅ Nenhum conflito detectado neste merge.");
+            return;
+        }
+        int totalConflicts = conflictFiles.size();
+        long testConflicts = conflictFiles.stream()
+                .filter(file -> file.toLowerCase().contains("test"))
+                .count();
+        double testConflictPercentage = ((double) testConflicts / totalConflicts) * 100;
+
+        System.out.println("\n📋 Arquivos em conflito:");
+        conflictFiles.forEach(System.out::println);
+
+        System.out.println("\n⚠️ Número total de arquivos em conflito: " + totalConflicts);
+        System.out.println("🧪 Número de arquivos de teste em conflito: " + testConflicts);
+        System.out.printf("📊 Percentual de arquivos de teste conflitantes: %.2f%%\n", testConflictPercentage);
+    }
+
+    private void resetRepository() throws IOException {
+        System.out.println("🔄 Resetando para a master e limpando repositório...");
+        gitHelper.resetRepository();
     }
 }
